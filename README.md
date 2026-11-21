@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿# HAYAG Node 2 - Ambient Light Monitoring
 
 ## Hardware
@@ -52,3 +53,6 @@ pio run -e esp32dev
 
 ## Serial monitor
 pio device monitor -b 115200
+=======
+# hayag-n02-lighting
+>>>>>>> origin/main
