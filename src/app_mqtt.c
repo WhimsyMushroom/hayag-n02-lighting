@@ -31,10 +31,19 @@ static void mqtt_event_handler(
             mqtt_connected = true;
             ESP_LOGI(TAG, "MQTT connected");
 
+            char status_payload[96];
+
+            snprintf(
+                status_payload,
+                sizeof(status_payload),
+                "{\"node_id\":\"%s\",\"status\":\"online\"}",
+                HAYAG_NODE_ID
+            );
+
             esp_mqtt_client_publish(
                 mqtt_client,
                 HAYAG_MQTT_STATUS_TOPIC,
-                "{\"node_id\":\"n02\",\"status\":\"online\"}",
+                status_payload,
                 0,
                 1,
                 1
@@ -119,7 +128,7 @@ esp_err_t app_mqtt_publish_reading(
         return ESP_ERR_INVALID_STATE;
     }
 
-    char payload[256];
+    char payload[320];
     int64_t uptime_ms = esp_timer_get_time() / 1000;
 
     snprintf(
@@ -127,6 +136,7 @@ esp_err_t app_mqtt_publish_reading(
         sizeof(payload),
         "{"
           "\"node_id\":\"%s\","
+          "\"location\":\"%s\","
           "\"sensor\":\"%s\","
           "\"lux\":%.2f,"
           "\"relative_light_index\":%u,"
@@ -134,6 +144,7 @@ esp_err_t app_mqtt_publish_reading(
           "\"uptime_ms\":%lld"
         "}",
         HAYAG_NODE_ID,
+        HAYAG_LOCATION,
         HAYAG_SENSOR_NAME,
         reading->lux,
         reading->relative_light_index,
