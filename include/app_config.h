@@ -5,10 +5,16 @@
 #define HAYAG_SENSOR_NAME "TSL2561"
 
 /*
- * 1 = simulated sensor readings
- * 0 = actual TSL2561 hardware
+ * Development default:
+ * 1 = software-generated simulated readings (no physical sensor required)
+ * 0 = read the physical TSL2561 over I2C
+ *
+ * Set to 0 only after the physical sensor is connected and configured.
  */
-#define HAYAG_SIMULATION 0
+#define HAYAG_SIMULATION 1
+
+/* Assigned desk/work-area placeholder. Update when the location is finalized. */
+#define HAYAG_LOCATION "assigned-desk"
 
 #define HAYAG_I2C_PORT I2C_NUM_0
 #define HAYAG_I2C_SDA 21
