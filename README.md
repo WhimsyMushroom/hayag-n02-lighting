@@ -1,8 +1,8 @@
 # HAYAG · Lighting
 
 - **Proposed node:** `n02`
-- **Purpose:** Measure how much light reaches a specific working surface. This node complements HAYAG's general-brightness observations by providing a localized lux measurement. The node reports observations only. It does not diagnose lighting equipment or determine whether a fixture is defective.
 - **Owner or co-owner:** Emmery Kelsey Mendoza, Jhanaloden Dipantar
+- **Purpose:** Measure how much light reaches a specific working surface. This node complements HAYAG's general-brightness observations by providing a localized lux measurement. The node reports observations only. It does not diagnose lighting equipment or determine whether a fixture is defective.
 - **Field location:** HAYAG classroom, actual room ID pending
 - **Hardware:** ESP32 DevKit / ESP32-WROOM, TSL2561 digital light sensor, and a low-voltage test LED
 
