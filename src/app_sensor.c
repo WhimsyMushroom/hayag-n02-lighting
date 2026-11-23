@@ -1,9 +1,11 @@
-#include <math.h>
 #include "app_sensor.h"
 #include "app_config.h"
 #include "app_light_logic.h"
 
+#if !HAYAG_SIMULATION
 #include "driver/i2c.h"
+#endif
+
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -31,15 +33,15 @@ static esp_err_t tsl_write_register(uint8_t reg, uint8_t value)
 static esp_err_t tsl_read_channel(uint8_t reg, uint16_t *value)
 {
     uint8_t command = (uint8_t)(0xA0 | reg);
-    uint8_t data[2];
+    uint8_t data[2] = {0};
 
     esp_err_t result = i2c_master_write_read_device(
         HAYAG_I2C_PORT,
         HAYAG_I2C_ADDRESS,
         &command,
-        1,
+        sizeof(command),
         data,
-        2,
+        sizeof(data),
         pdMS_TO_TICKS(1000)
     );
 
@@ -53,59 +55,14 @@ static esp_err_t tsl_read_channel(uint8_t reg, uint16_t *value)
     return ESP_OK;
 }
 
-static float tsl_calculate_lux(uint16_t ch0, uint16_t ch1)
-{
-    if (ch0 == 0) {
-        return 0.0f;
-    }
-
-    float ratio = (float)ch1 / (float)ch0;
-    float lux = 0.0f;
-
-    if (ratio <= 0.50f) {
-        lux = 0.0304f * ch0 -
-              0.062f * ch0 * powf(ratio, 1.4f);
-    }
-    else if (ratio <= 0.61f) {
-        lux = 0.0224f * ch0 - 0.031f * ch1;
-    }
-    else if (ratio <= 0.80f) {
-        lux = 0.0128f * ch0 - 0.0153f * ch1;
-    }
-    else if (ratio <= 1.30f) {
-        lux = 0.00146f * ch0 - 0.00112f * ch1;
-    }
-
-    if (lux < 0.0f) {
-        lux = 0.0f;
-    }
-
-    return lux;
-}
-
 #endif
-
-static uint8_t calculate_relative_index(float lux)
-{
-    float index = (lux / HAYAG_LUX_INDEX_MAX) * 100.0f;
-
-    if (index < 0.0f) {
-        index = 0.0f;
-    }
-
-    if (index > 100.0f) {
-        index = 100.0f;
-    }
-
-    return (uint8_t)(index + 0.5f);
-}
 
 esp_err_t app_sensor_init(void)
 {
 #if HAYAG_SIMULATION
 
     ESP_LOGW(TAG, "SIMULATION MODE ENABLED");
-    ESP_LOGW(TAG, "No physical sensor is being read.");
+    ESP_LOGW(TAG, "Generated lux values are fictional; no sensor is read.");
 
     return ESP_OK;
 
@@ -120,10 +77,7 @@ esp_err_t app_sensor_init(void)
         .master.clk_speed = 100000
     };
 
-    esp_err_t result = i2c_param_config(
-        HAYAG_I2C_PORT,
-        &config
-    );
+    esp_err_t result = i2c_param_config(HAYAG_I2C_PORT, &config);
 
     if (result != ESP_OK) {
         return result;
@@ -147,6 +101,7 @@ esp_err_t app_sensor_init(void)
         return result;
     }
 
+    /* 402 ms integration time. */
     result = tsl_write_register(0x01, 0x02);
 
     if (result != ESP_OK) {
@@ -173,8 +128,9 @@ esp_err_t app_sensor_read(app_light_reading_t *reading)
 #if HAYAG_SIMULATION
 
     /*
-     * Fictional values for software demonstration.
-     * They simulate changing classroom brightness.
+     * Fictional values for software testing.
+     * The sequence represents changing brightness scenarios,
+     * not real environmental measurements.
      */
     static const float simulated_values[] = {
         45.0f,
@@ -188,11 +144,10 @@ esp_err_t app_sensor_read(app_light_reading_t *reading)
 
     static unsigned int position = 0;
 
-    lux = simulated_values[
-        position %
-        (sizeof(simulated_values) / sizeof(simulated_values[0]))
-    ];
+    const size_t count =
+        sizeof(simulated_values) / sizeof(simulated_values[0]);
 
+    lux = simulated_values[position % count];
     position++;
 
     reading->simulated = true;
@@ -215,15 +170,16 @@ esp_err_t app_sensor_read(app_light_reading_t *reading)
     }
 
     lux = app_light_calculate_lux(channel0, channel1);
-
     reading->simulated = false;
 
 #endif
 
     reading->lux = lux;
-
     reading->relative_light_index =
-        app_light_calculate_relative_index(lux, HAYAG_LUX_INDEX_MAX);
+        app_light_calculate_relative_index(
+            lux,
+            HAYAG_LUX_INDEX_MAX
+        );
 
     ESP_LOGI(
         TAG,
@@ -235,5 +191,3 @@ esp_err_t app_sensor_read(app_light_reading_t *reading)
 
     return ESP_OK;
 }
-
-
