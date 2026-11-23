@@ -1,7 +1,19 @@
-﻿.pio/
+# PlatformIO
+.pio/
 .vscode/
+
+# OS / Python
 .DS_Store
 __pycache__/
-include/secrets.h
+
+# Private credentials
+secrets.h
+**/secrets.h
+
+# ESP-IDF generated configuration
 sdkconfig
 sdkconfig.old
+
+# Archived/backup source directories
+include-backup/
+src-backup/
